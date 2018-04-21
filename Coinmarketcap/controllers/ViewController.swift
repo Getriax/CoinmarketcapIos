@@ -38,7 +38,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
         filterCoins(serchText: searchText)
-        coinTableView.reloadData()
     }
     
     
@@ -94,21 +93,20 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-        //let fs = FileManager.default
+
         searchBar.isHidden = true;
         readImagesFile()
         loadCoins()
         loadGlobal()
         initRefreschController()
-        //coins.forEach {print($0)}
         
         
+        let tap = UITapGestureRecognizer(target: self, action: #selector(self.dismissKeybaord))
+        view.addGestureRecognizer(tap)
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
 
     func readImagesFile() {
@@ -157,7 +155,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                     let decoder = JSONDecoder()
                     self.coins = try decoder.decode([Coin].self, from: data)
                     self.filterCoins(serchText: self.searchBar.text)
-                    self.coinTableView.reloadData()
+                    
                 } catch let jsonError {
                     print("Failed to decode ", jsonError)
                 }
@@ -203,7 +201,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     @objc
     func refresh() {
-        print("refreshing")
         loadCoins()
         loadGlobal()
         refreshController.endRefreshing()
@@ -213,6 +210,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     func filterCoins(serchText: String?) {
         guard let search = serchText else {
             self.filtredCoins = self.coins
+            self.coinTableView.reloadData()
             return
         }
         
@@ -223,6 +221,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 return coin.name.lowercased().contains(search.lowercased()) ? true : coin.symbol.lowercased() == search.lowercased()
             })
         }
+        
+        self.coinTableView.reloadData()
+        return
     }
     
     @IBAction func triggerSearchBar(_ sender: Any) {
@@ -240,11 +241,16 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 self.searchBar.isHidden = true;
             }) { (complete) in
                 self.searchButton.setTitle("🔎", for: .normal)
+                self.dismissKeybaord()
+                self.filterCoins(serchText: nil)
+                self.searchBar.text = nil
             }
 
         }
-        
-        
+    }
+    
+    @objc func dismissKeybaord() {
+        self.view.endEditing(true)
     }
 }
 
